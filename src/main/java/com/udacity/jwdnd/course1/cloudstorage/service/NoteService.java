@@ -26,11 +26,11 @@ public class NoteService {
         return noteMapper.getAllNotes();
     }
 
-    public void updateNote(Note updatedNote) {
-        noteMapper.updateNote(updatedNote);
+    public int updateNote(Note updatedNote) {
+        return noteMapper.updateNote(updatedNote);
     }
 
-    public void deleteNote(Integer noteId) {
-        noteMapper.deleteNote(noteId);
+    public int deleteNote(Integer noteId) {
+        return noteMapper.deleteNote(noteId);
     }
 }

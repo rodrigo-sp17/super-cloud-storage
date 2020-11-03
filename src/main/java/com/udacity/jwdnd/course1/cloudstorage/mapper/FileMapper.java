@@ -20,7 +20,7 @@ public interface FileMapper {
     @Insert("INSERT INTO FILES(filename, contenttype, filesize, userid, filedata) " +
             "VALUES(#{fileName}, #{contentType}, #{fileSize}, #{userId}, #{fileData})")
     @Options(useGeneratedKeys = true, keyProperty = "fileId")
-    Integer insertFile(File file);
+    int insertFile(File file);
 
     @Update("UPDATE FILES SET filename = #{fileName}, " +
             "contenttype = #{contentType}, " +
@@ -29,8 +29,8 @@ public interface FileMapper {
             "filedata = #{fileData} " +
             "WHERE" +
             "fileId = #{fileId}")
-    void updateFile(File updatedFile);
+    int updateFile(File updatedFile);
 
     @Delete("DELETE FROM FILES WHERE fileId = #{fileId}")
-    void deleteFile(Integer fileId);
+    int deleteFile(Integer fileId);
 }

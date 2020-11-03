@@ -38,8 +38,8 @@
                                         <button type="submit" class="btn btn-dark">Upload</button>
                                     </div>
                                 </div>
-                                <div th:if="${uploadSuccess}" class="alert alert-success">File uploaded!</div>
-                                <div th:if="${uploadError}" th:text="${uploadError}" class="alert alert-danger">Example error message</div>
+                                <div th:if="${fileSuccess}" th:text="${fileSuccess}" class="alert alert-success">Example success message</div>
+                                <div th:if="${fileError}" th:text="${fileError}" class="alert alert-danger">Example error message</div>
                             </div>
                         </form>
                         <div class="table-responsive">
@@ -68,6 +68,8 @@
                         </button>
 
                         <div class="table-responsive">
+                            <div th:if="${noteSuccess}" th:text="${noteSuccess}" class="alert alert-success">Example success message</div>
+                            <div th:if="${noteError}" th:text="${noteError}" class="alert alert-danger">Example error message</div>
                             <table class="table table-striped" id="userTable">
                                 <thead>
                                     <tr>

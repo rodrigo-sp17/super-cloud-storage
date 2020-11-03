@@ -4,7 +4,6 @@ import com.udacity.jwdnd.course1.cloudstorage.entity.Credential;
 import com.udacity.jwdnd.course1.cloudstorage.entity.File;
 import com.udacity.jwdnd.course1.cloudstorage.entity.Note;
 import com.udacity.jwdnd.course1.cloudstorage.service.*;
-import org.springframework.boot.Banner;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -44,34 +43,42 @@ public class HomeController {
     public String uploadFile(@RequestParam("fileUpload") MultipartFile file,
                              Authentication authentication,
                              Model model) {
+        String uploadSuccess = null;
         String uploadError = null;
         if (fileService.isFilenameAvailable(file.getOriginalFilename())) {
             String username = authentication.getName();
             Integer userId = userService.getUser(username).getUserId();
-            fileService.createFile(file, userId);
+            int rowsAdded = fileService.createFile(file, userId);
+            if (rowsAdded < 0) {
+                uploadError = "Ops! Error uploading file. Please, try again!";
+            } else {
+                uploadSuccess = "File uploaded successfully!";
+            }
         } else {
-            uploadError = "Oops, there is already a file with this name!" +
-                    " Please, choose another file name!";
+            uploadError = "Ops! There is already a file with this name!" +
+                    " Please, choose another file!";
         }
-
-        model.addAttribute("files", fileService.getAllFiles());
 
         if (uploadError == null) {
-            model.addAttribute("uploadSuccess", true);
+            model.addAttribute("fileSuccess", uploadSuccess);
         } else {
-            model.addAttribute("uploadError", uploadError);
+            model.addAttribute("fileError", uploadError);
         }
 
-        return "home";
+        return "redirect:/home";
     }
 
     @GetMapping(value = "/file", params = "view")
     @ResponseBody
-    public ResponseEntity<byte[]> viewFile(@RequestParam("view") Integer fileId) {
+    public ResponseEntity<byte[]> viewFile(@RequestParam("view") Integer fileId,
+                                           Model model) {
         HttpHeaders headers = new HttpHeaders();
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 
         File file = fileService.getFile(fileId);
+        if (file == null) {
+            model.addAttribute("fileError", "Ops! Error retrieving file. Please, try again!");
+        }
 
         headers.setContentType(MediaType.parseMediaType(file.getContentType()));
         headers.setContentDisposition(ContentDisposition.builder("inline")
@@ -83,16 +90,32 @@ public class HomeController {
 
     @GetMapping(value = "/file", params = "delete")
     public String deleteFile(@RequestParam("delete") Integer fileId, Model model) {
-        fileService.deleteFile(fileId);
+        String deleteSuccess = null;
+        String deleteError = null;
 
+        int rowsDeleted = fileService.deleteFile(fileId);
+        if (rowsDeleted < 1) {
+            deleteError = "Ops! Could not delete file. Please, try again!";
+        } else {
+            deleteSuccess = "File deleted successfully!";
+        }
+
+        if (deleteError == null) {
+            model.addAttribute("fileSuccess", deleteSuccess);
+        } else {
+            model.addAttribute("fileError", deleteError);
+        }
         model.addAttribute("files", fileService.getAllFiles());
-        return "home";
+
+        return "redirect:/home";
     }
 
     @PostMapping("/submit-note")
     public String submitNote(Authentication authentication,
                              @ModelAttribute Note note,
                              Model model) {
+        String noteSuccess = null;
+        String noteError = null;
         Integer noteId = note.getNoteId();
         String username = authentication.getName();
         Integer userId = userService.getUser(username).getUserId();
@@ -102,25 +125,48 @@ public class HomeController {
 
         if (noteId == null) {
             // adds note
-            Integer id = noteService.createNote(note);
-            note.setNoteId(id);
+            int rowsAdded = noteService.createNote(note);
+            if (rowsAdded < 0) {
+                noteError = "Ops! Could not add the note. Please, try again!";
+            } else {
+                noteSuccess = "Note added successfully!";
+            }
+
         } else {
             // edits note
-            noteService.updateNote(note);
+            int rowsEdited = noteService.updateNote(note);
+            if (rowsEdited < 0) {
+                noteError = "Ops! Could not edit the note. Please, try again!";
+            } else {
+                noteSuccess = "Note edited successfully!";
+            }
         }
 
-        model.addAttribute("notes", noteService.getAllNotes());
-        // attempt to redirect to a fragment - the tab does not change, however
+        if (noteError == null) {
+            model.addAttribute("noteSuccess", noteSuccess);
+        } else {
+            model.addAttribute("noteError", noteError);
+        }
+
+        // TODO - attempt to redirect to a fragment - the tab does not change, however
         return "redirect:/home#nav-notes";
     }
 
     @GetMapping(value = "/note", params = "delete")
     public String deleteNote(@RequestParam("delete") Integer noteId, Model model) {
-        noteService.deleteNote(noteId);
+        String deleteError = null;
+        int rowsDeleted = noteService.deleteNote(noteId);
+        if (rowsDeleted < 1) {
+            deleteError = "Ops! Could not delete note. Please, try again!";
+        }
 
-        model.addAttribute("notes", noteService.getAllNotes());
+        if (deleteError == null) {
+            model.addAttribute("noteSuccess", "Note deleted successfully!");
+        } else {
+            model.addAttribute("noteError", deleteError);
+        }
 
-        return "home";
+        return "redirect:/home";
     }
 
     @PostMapping("/submit-credential")
@@ -156,16 +202,14 @@ public class HomeController {
             model.addAttribute("credentialError", credentialError);
         }
 
-        model.addAttribute("credentials", credentialService.getAllCredentials());
-        model.addAttribute("encryptionService", encryptionService);
-        return "home";
+        return "redirect:/home";
     }
 
     @PostMapping("/delete-credential")
     public String deleteCredential(@ModelAttribute Credential credential, Model model) {
         String deleteError = null;
         int rowsDeleted = credentialService.deleteCredential(credential.getCredentialId());
-        if (rowsDeleted < 0) {
+        if (rowsDeleted < 1) {
             deleteError = "Oh snap! Could not delete the credential! Please, try again!";
         }
 
@@ -176,8 +220,6 @@ public class HomeController {
             model.addAttribute("credentialError", deleteError);
         }
 
-        model.addAttribute("credentials", credentialService.getAllCredentials());
-        model.addAttribute("encryptionService", encryptionService);
-        return "home";
+        return "redirect:/home";
     }
 }

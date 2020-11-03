@@ -43,7 +43,7 @@ public class FileService {
         return fileMapper.getFileByUsername(fileName) == null;
     }
 
-    public void createFile(MultipartFile file, Integer creatorUserId) {
+    public int createFile(MultipartFile file, Integer creatorUserId) {
         try {
             if (file != null) {
                 byte[] data = file.getInputStream().readAllBytes();
@@ -55,15 +55,16 @@ public class FileService {
                         creatorUserId,
                         data
                         );
-                fileMapper.insertFile(newFile);
+                return fileMapper.insertFile(newFile);
             }
         } catch (IOException e) {
             logger.error("Failed to upload file");
         }
+        return -1;
     }
 
-    public void deleteFile(Integer fileId) {
-        fileMapper.deleteFile(fileId);
+    public int deleteFile(Integer fileId) {
+        return fileMapper.deleteFile(fileId);
     }
 
     // These below regard file uploading - not necessary for the scope of this program

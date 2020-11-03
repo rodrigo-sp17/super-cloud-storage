@@ -71,21 +71,23 @@ public class HomePage {
     @FindBy(id = "nav-files-tab")
     private WebElement filesTab;
 
-
-
-    /*
-    @FindBy(id = "editNote-button")
-    private WebElement editNoteButton;
-
-    @FindBy(id = "deleteNote-button")
-    private WebElement deleteNoteButton;
-    */
-
     private final WebDriver driver;
+
+    // Minimum time required for tabs to load. Unfortunately, FluentWait is not enough for it
+    // to be clicked every time. In milliseconds.
+    private static final int TAB_WAITING_TIME = 1500;
 
     public HomePage(WebDriver driver) {
         PageFactory.initElements(driver, this);
         this.driver = driver;
+    }
+
+    private void waitTabs() {
+        try {
+            Thread.sleep(TAB_WAITING_TIME);
+        } catch (InterruptedException e) {
+            System.err.println(e.getMessage());
+        }
     }
 
     public void logout() {
@@ -102,20 +104,23 @@ public class HomePage {
     }
 
     public void setNotesTab() {
+        waitTabs();
         Wait<WebDriver> wait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(10))
                 .pollingEvery(Duration.ofSeconds(2));
-        //wait.until(ExpectedConditions.visibilityOf(notesTab));
         notesTab.click();
     }
 
     public void setCredentialsTab() {
+        waitTabs();
         Wait<WebDriver> wait = new FluentWait<>(driver)
                 .withTimeout(Duration.ofSeconds(10))
                 .pollingEvery(Duration.ofSeconds(2));
         credentialsTab.click();
     }
 
+
+    /* NOTES */
     public void addNote(Note note) {
         WebDriverWait wait = new WebDriverWait(driver, 2000);
         wait.until(ExpectedConditions.elementToBeClickable(addNoteButton));
@@ -132,31 +137,44 @@ public class HomePage {
     public List<Note> getNotes() {
         List<Note> notes = new ArrayList<>();
 
-        WebDriverWait wait = new WebDriverWait(driver, 2000);
-        wait.until(ExpectedConditions.visibilityOf(notesTableBody));
-
-        List<WebElement> rows = notesTableBody.findElements(By.tagName("tr"));
+        var rows = getNoteRows();
         rows.forEach(row -> {
-            //Integer noteId = Integer.parseInt(row.findElement(By.name("noteId")).getText());
+            // Integer noteId = Integer.parseInt(row.findElement(By.name("noteId")).getText());
             String noteTitle = row.findElement(By.name("noteTitle")).getText();
             String noteDescription = row.findElement(By.name("noteDescription")).getText();
             notes.add(new Note(null, noteTitle, noteDescription, null));
         });
+
         return notes;
     }
 
-    public void editNote(Note editedNote) {
-        List<WebElement> rows = notesTableBody.findElements(By.tagName("tr"));
+    private List<WebElement> getNoteRows() {
+        WebDriverWait wait = new WebDriverWait(driver, 2000);
+        wait.until(ExpectedConditions.visibilityOf(notesTableBody));
+
+        return notesTableBody.findElements(By.tagName("tr"));
+    }
+
+    public Note viewNote(String displayTitle, String displayDescription) {
+        var rows = getNoteRows();
         rows.forEach(row -> {
             String noteTitle = row.findElement(By.name("noteTitle")).getText();
-            if (noteTitle.equals(editedNote.getNoteTitle())) {
+            String noteDescription = row.findElement(By.name("noteDescription")).getText();
+            if (noteTitle.equals(displayTitle) && noteDescription.equals(displayDescription)) {
                 row.findElement(By.name("edit-button")).click();
             }
         });
-
         driver.switchTo().activeElement();
         WebDriverWait wait = new WebDriverWait(driver, 2000);
         wait.until(ExpectedConditions.visibilityOf(inputNoteTitle));
+        String title = inputNoteTitle.getAttribute("value");
+        String description = inputNoteDescription.getAttribute("value");
+
+        return new Note(null, title, description, null);
+    }
+
+    public void editNote(String title, String description, Note editedNote) {
+        viewNote(title, description);
 
         inputNoteTitle.clear();
         inputNoteTitle.sendKeys(editedNote.getNoteTitle());
@@ -166,8 +184,9 @@ public class HomePage {
         noteSubmitButton.click();
     }
 
+
     public void deleteNote(Note note) {
-        List<WebElement> rows = notesTableBody.findElements(By.tagName("tr"));
+        var rows = getNoteRows();
         rows.forEach(row -> {
             String noteTitle = row.findElement(By.name("noteTitle")).getText();
             if (noteTitle.equals(note.getNoteTitle())) {
@@ -176,6 +195,8 @@ public class HomePage {
         });
     }
 
+
+    /* CREDENTIALS */
     private List<WebElement> getCredentialRows() {
         WebDriverWait wait = new WebDriverWait(driver, 2000);
         wait.until(ExpectedConditions.visibilityOf(credentialTableBody));
