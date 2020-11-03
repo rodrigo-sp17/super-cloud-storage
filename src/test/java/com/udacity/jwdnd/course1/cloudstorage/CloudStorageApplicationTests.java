@@ -1,5 +1,6 @@
 package com.udacity.jwdnd.course1.cloudstorage;
 
+import com.udacity.jwdnd.course1.cloudstorage.entity.Credential;
 import com.udacity.jwdnd.course1.cloudstorage.entity.Note;
 import com.udacity.jwdnd.course1.cloudstorage.entity.User;
 import com.udacity.jwdnd.course1.cloudstorage.pages.HomePage;
@@ -42,7 +43,7 @@ class CloudStorageApplicationTests {
 	@AfterEach
 	public void afterEach() {
 		if (this.driver != null) {
-			driver.quit();
+			//driver.quit();
 		}
 	}
 
@@ -80,6 +81,9 @@ class CloudStorageApplicationTests {
 	}
 
 	private void login(User user) {
+		if (!signedUpUser1) {
+			signup(user1);
+		}
 		getLoginPage();
 		LoginPage loginPage = new LoginPage(driver);
 		loginPage.login(user.getUserName(), user.getPassword());
@@ -93,9 +97,6 @@ class CloudStorageApplicationTests {
 
 	@Test
 	public void testLogout() {
-		if (!signedUpUser1) {
-			signup(user1);
-		}
 		login(user1);
 
 		getHomePage();
@@ -154,8 +155,6 @@ class CloudStorageApplicationTests {
 		assertFalse(signupPage.isSignupSuccessful());
 	}
 
-
-
 	@Test
 	public void testNotes() {
 		if (!signedUpUser1) {
@@ -195,6 +194,160 @@ class CloudStorageApplicationTests {
 		homePage.setNotesTab();
 		homePage.deleteNote(note1);
 		assertTrue(homePage.getNotes().isEmpty());
+	}
+
+	Credential credential1 = new Credential(
+			null,
+			"https://www.facebook.com/",
+			"John@DOE123",
+			null,
+			"decryptedpassword1",
+			null
+	);
+	Credential credential2 = new Credential(
+			null,
+			"https://twitter.com/login?lang=pt",
+			"JANE_d03",
+			null,
+			"decryptedpassword2",
+			null
+	);
+	Credential credential3 = new Credential(
+			null,
+			"https://linkedin.com/",
+			"krazy",
+			null,
+			"decryptedpassword3",
+			null
+	);
+
+	@Test
+	public void testCreateCredential() {
+		login(user1);
+		getHomePage();
+		HomePage homePage = new HomePage(driver);
+		homePage.setCredentialsTab();
+
+		homePage.addCredential(credential1);
+
+		homePage.setCredentialsTab();
+		List<Credential> credentials = homePage.getCredentials();
+		Set<String> usernames = credentials.stream().map(Credential::getUserName)
+				.collect(Collectors.toSet());
+		Set<String> urls = credentials.stream().map(Credential::getUrl)
+				.collect(Collectors.toSet());
+		Set<String> passwords = credentials.stream().map(Credential::getPassword)
+				.collect(Collectors.toSet());
+
+
+		homePage.addCredential(credential2);
+		homePage.setCredentialsTab();
+		credentials = homePage.getCredentials();
+		usernames = credentials.stream().map(Credential::getUserName)
+				.collect(Collectors.toSet());
+		urls = credentials.stream().map(Credential::getUrl)
+				.collect(Collectors.toSet());
+		passwords = credentials.stream().map(Credential::getPassword)
+				.collect(Collectors.toSet());
+		assertEquals(2, credentials.size());
+		assertTrue(usernames.contains(credential1.getUserName()));
+		assertTrue(usernames.contains(credential2.getUserName()));
+		assertTrue(urls.contains(credential1.getUrl()));
+		assertTrue(urls.contains(credential2.getUrl()));
+		assertFalse(passwords.contains(credential1.getPassword()));
+		assertFalse(passwords.contains(credential2.getPassword()));
+	}
+
+	@Test
+	public void testEditCredential() {
+		login(user1);
+		getHomePage();
+		HomePage homePage = new HomePage(driver);
+
+		homePage.setCredentialsTab();
+		homePage.addCredential(credential3);
+
+		String originalUrl = credential3.getUrl();
+		String originalUsername = credential3.getUserName();
+		String originalPassword = credential3.getPassword();
+
+		credential3.setUrl("http://mockurl.com");
+		credential3.setUserName("changed username");
+		credential3.setPassword("neweditedpassword");
+
+		homePage.editCredential(originalUrl, originalUsername, credential3);
+
+		homePage.setCredentialsTab();
+		List<Credential> credentials = homePage.getCredentials();
+		Set<String> usernames = credentials.stream().map(Credential::getUserName)
+				.collect(Collectors.toSet());
+		Set<String> urls = credentials.stream().map(Credential::getUrl)
+				.collect(Collectors.toSet());
+		Set<String> passwords = credentials.stream().map(Credential::getPassword)
+				.collect(Collectors.toSet());
+		assertTrue(usernames.contains(credential3.getUserName()));
+		assertFalse(usernames.contains(originalUsername));
+
+		assertTrue(urls.contains(credential3.getUrl()));
+		assertFalse(urls.contains(originalUrl));
+
+		// Ensures the list does not have plain passwords on site
+		assertFalse(passwords.contains(originalPassword));
+		assertFalse(passwords.contains(credential3.getPassword()));
+
+		homePage.setCredentialsTab();
+		Credential displayedCredential = homePage.viewCredential(credential3.getUrl(),
+				credential3.getUserName());
+		assertEquals(displayedCredential.getUrl(), credential3.getUrl());
+		assertEquals(displayedCredential.getUserName(), credential3.getUserName());
+		// Password should be decrypted in window
+		assertEquals(displayedCredential.getPassword(), credential3.getPassword());
+	}
+
+	@Test
+	public void testDeleteCredential() {
+		login(user1);getHomePage();
+		HomePage homePage = new HomePage(driver);
+
+		Credential credential4 = new Credential(
+				null,
+				"https://google.com/",
+				"anotherone",
+				null,
+				"decryptedpassword4",
+				null
+		);
+
+		homePage.setCredentialsTab();
+		homePage.addCredential(credential4);
+		homePage.setCredentialsTab();
+
+		homePage.setCredentialsTab();
+		List<Credential> credentials = homePage.getCredentials();
+		Set<String> usernames = credentials.stream().map(Credential::getUserName)
+				.collect(Collectors.toSet());
+		Set<String> urls = credentials.stream().map(Credential::getUrl)
+				.collect(Collectors.toSet());
+		Set<String> passwords = credentials.stream().map(Credential::getPassword)
+				.collect(Collectors.toSet());
+
+		assertTrue(usernames.contains(credential4.getUserName()));
+		assertTrue(urls.contains(credential4.getUrl()));
+		// Ensures the list does not have plain passwords on site
+		assertFalse(passwords.contains(credential4.getPassword()));
+
+		homePage.setCredentialsTab();
+		homePage.deleteCredential(credential4);
+
+		homePage.setCredentialsTab();
+		credentials = homePage.getCredentials();
+		usernames = credentials.stream().map(Credential::getUserName)
+				.collect(Collectors.toSet());
+		urls = credentials.stream().map(Credential::getUrl)
+				.collect(Collectors.toSet());
+		assertFalse(usernames.contains(credential4.getUserName()) &&
+				urls.contains(credential4.getUrl()));
+
 	}
 
 }

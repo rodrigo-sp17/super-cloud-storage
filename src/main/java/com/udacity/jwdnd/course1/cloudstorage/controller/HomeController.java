@@ -1,10 +1,10 @@
 package com.udacity.jwdnd.course1.cloudstorage.controller;
 
+import com.udacity.jwdnd.course1.cloudstorage.entity.Credential;
 import com.udacity.jwdnd.course1.cloudstorage.entity.File;
 import com.udacity.jwdnd.course1.cloudstorage.entity.Note;
-import com.udacity.jwdnd.course1.cloudstorage.service.FileService;
-import com.udacity.jwdnd.course1.cloudstorage.service.NoteService;
-import com.udacity.jwdnd.course1.cloudstorage.service.UserService;
+import com.udacity.jwdnd.course1.cloudstorage.service.*;
+import org.springframework.boot.Banner;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -18,18 +18,25 @@ public class HomeController {
     private final NoteService noteService;
     private final UserService userService;
     private final FileService fileService;
+    private final CredentialService credentialService;
+    private final EncryptionService encryptionService;
 
-    public HomeController(NoteService noteService, UserService userService,
-                          FileService fileService) {
+    public HomeController(NoteService noteService, UserService userService, FileService fileService,
+                          CredentialService credentialService, EncryptionService encryptionService) {
         this.noteService = noteService;
         this.userService = userService;
         this.fileService = fileService;
+        this.credentialService = credentialService;
+        this.encryptionService = encryptionService;
     }
 
     @GetMapping
     public String homeView(@ModelAttribute Note note, Model model) {
         model.addAttribute("files", fileService.getAllFiles());
         model.addAttribute("notes", noteService.getAllNotes());
+        model.addAttribute("credentials", credentialService.getAllCredentials());
+        model.addAttribute("encryptionService", encryptionService);
+
         return "home";
     }
 
@@ -112,6 +119,36 @@ public class HomeController {
         noteService.deleteNote(noteId);
 
         model.addAttribute("notes", noteService.getAllNotes());
+
+        return "home";
+    }
+
+    @PostMapping("/submit-credential")
+    public String submitCredential(Authentication authentication,
+                                   @ModelAttribute Credential credential,
+                                   Model model) {
+        String credentialError = null;  // TODO
+        Integer userId = userService.getUser(authentication.getName()).getUserId();
+        credential.setUserId(userId);
+
+        if (credential.getCredentialId() == null) {
+            // add
+            credentialService.createCredential(credential);
+        } else {
+            // edit
+            credentialService.editCredential(credential);
+        }
+
+        model.addAttribute("credentials", credentialService.getAllCredentials());
+        model.addAttribute("encryptionService", encryptionService);
+        return "home";
+    }
+
+    @PostMapping("/delete-credential")
+    public String deleteCredential(@ModelAttribute Credential credential, Model model) {
+        credentialService.deleteCredential(credential.getCredentialId());
+        model.addAttribute("credentials", credentialService.getAllCredentials());
+        model.addAttribute("encryptionService", encryptionService);
         return "home";
     }
 }

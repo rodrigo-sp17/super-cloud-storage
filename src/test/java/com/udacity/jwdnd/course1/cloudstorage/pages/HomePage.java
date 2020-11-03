@@ -1,5 +1,6 @@
 package com.udacity.jwdnd.course1.cloudstorage.pages;
 
+import com.udacity.jwdnd.course1.cloudstorage.entity.Credential;
 import com.udacity.jwdnd.course1.cloudstorage.entity.Note;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -40,11 +41,37 @@ public class HomePage {
     @FindBy(id = "nav-notes-tab")
     private WebElement notesTab;
 
+    //@FindBy(id = "nav-notes")
+    //private WebElement navNotes;
+
+    @FindBy(id = "addCredential-button")
+    private WebElement addCredentialButton;
+
+    @FindBy(id = "credential-url")
+    private WebElement inputCredentialUrl;
+
+    @FindBy(id = "credential-username")
+    private WebElement inputCredentialUserName;
+
+    @FindBy(id = "credential-password")
+    private WebElement inputCredentialPassword;
+
+    @FindBy(id = "credentialSubmit-button")
+    private WebElement credentialSubmitButton;
+
+    @FindBy(id = "credentialClose-button")
+    private WebElement credentialCloseButton;
+
+    @FindBy(id = "nav-credentials-tab")
+    private WebElement credentialsTab;
+
+    @FindBy(id = "credential-rows")
+    private WebElement credentialTableBody;
+
     @FindBy(id = "nav-files-tab")
     private WebElement filesTab;
 
-    @FindBy(id = "nav-notes")
-    private WebElement navNotes;
+
 
     /*
     @FindBy(id = "editNote-button")
@@ -80,6 +107,13 @@ public class HomePage {
                 .pollingEvery(Duration.ofSeconds(2));
         //wait.until(ExpectedConditions.visibilityOf(notesTab));
         notesTab.click();
+    }
+
+    public void setCredentialsTab() {
+        Wait<WebDriver> wait = new FluentWait<>(driver)
+                .withTimeout(Duration.ofSeconds(10))
+                .pollingEvery(Duration.ofSeconds(2));
+        credentialsTab.click();
     }
 
     public void addNote(Note note) {
@@ -142,5 +176,107 @@ public class HomePage {
         });
     }
 
+    private List<WebElement> getCredentialRows() {
+        WebDriverWait wait = new WebDriverWait(driver, 2000);
+        wait.until(ExpectedConditions.visibilityOf(credentialTableBody));
 
+        return credentialTableBody.findElements(By.tagName("tr"));
+    }
+
+    public List<Credential> getCredentials() {
+        List<Credential> credentials = new ArrayList<>();
+
+        List<WebElement> rows = getCredentialRows();
+        rows.forEach(row -> {
+            String url = row.findElement(By.name("url")).getText();
+            String userName = row.findElement(By.name("userName")).getText();
+            String password = row.findElement(By.name("password")).getText();
+            credentials.add(new Credential(null,
+                    url, userName, null, password, null));
+        });
+
+        return credentials;
+    }
+
+    // create credential
+    public void addCredential(Credential credential) {
+        WebDriverWait wait = new WebDriverWait(driver, 2000);
+        wait.until(ExpectedConditions.elementToBeClickable(addCredentialButton));
+        addCredentialButton.click();
+
+        driver.switchTo().activeElement();
+        wait.until(ExpectedConditions.visibilityOf(inputCredentialUrl));
+        inputCredentialUrl.clear();
+        inputCredentialUrl.sendKeys(credential.getUrl());
+        inputCredentialUserName.clear();
+        inputCredentialUserName.sendKeys(credential.getUserName());
+        inputCredentialPassword.clear();
+        inputCredentialPassword.sendKeys(credential.getPassword());
+
+        credentialSubmitButton.click();
+    }
+
+    /**
+     * Returns a credential corresponding to the Credential currently displayed in the modal.
+     *
+     * @param displayUrl    the Url of the credential to view, as displayed in the table
+     * @param displayUsername  the userName of the credential to view, as displayed in the table
+     * @return  Credential object with url, userName and password fields as displayed on the modal
+     *          form.
+     */
+    public Credential viewCredential(String displayUrl, String displayUsername) {
+        List<WebElement> rows = getCredentialRows();
+        rows.forEach(row -> {
+            String url = row.findElement(By.name("url")).getText();
+            String userName = row.findElement(By.name("userName")).getText();
+            if (url.equals(displayUrl)
+                    && userName.equals(displayUsername)) {
+                row.findElement(By.name("edit-button")).click();
+            }
+        });
+        driver.switchTo().activeElement();
+        WebDriverWait wait = new WebDriverWait(driver, 2000);
+        wait.until(ExpectedConditions.visibilityOf(inputCredentialUrl));
+        String url = inputCredentialUrl.getAttribute("value");
+        String username = inputCredentialUserName.getAttribute("value");
+        String password = inputCredentialPassword.getAttribute("value");
+
+        return new Credential(null,
+                url,
+                username,
+                null,
+                password,
+                null);
+    }
+
+    public void closeCredentialModal() {
+        WebDriverWait wait = new WebDriverWait(driver, 2000);
+        wait.until(ExpectedConditions.visibilityOf(credentialCloseButton));
+        credentialCloseButton.click();
+    }
+
+    // edit credential
+    public void editCredential(String url, String username, Credential editedCredential) {
+        viewCredential(url, username);
+        inputCredentialUrl.clear();
+        inputCredentialUrl.sendKeys(editedCredential.getUrl());
+        inputCredentialUserName.clear();
+        inputCredentialUserName.sendKeys(editedCredential.getUserName());
+        inputCredentialPassword.clear();
+        inputCredentialPassword.sendKeys(editedCredential.getPassword());
+
+        credentialSubmitButton.click();
+    }
+
+    // delete credential
+    public void deleteCredential(Credential credential) {
+        getCredentialRows().forEach(row -> {
+            String url = row.findElement(By.name("url")).getText();
+            String userName = row.findElement(By.name("userName")).getText();
+            if (url.equals(credential.getUrl()) &&
+            userName.equals(credential.getUserName())) {
+                driver.findElement(By.name("delete-button")).click();
+            }
+        });
+    }
 }
