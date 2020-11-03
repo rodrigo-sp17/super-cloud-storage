@@ -27,16 +27,16 @@ public class CredentialService {
         return credentialMapper.getCredential(url, username);
     }
 
-    public Integer createCredential(Credential credential) {
+    public int createCredential(Credential credential) {
         return credentialMapper.insertCredential(encryptPassword(credential));
     }
 
-    public void editCredential(Credential editedCredential) {
-        credentialMapper.updateCredential(encryptPassword(editedCredential));
+    public int editCredential(Credential editedCredential) {
+        return credentialMapper.updateCredential(encryptPassword(editedCredential));
     }
 
-    public void deleteCredential(Integer credentialId) {
-        credentialMapper.deleteCredential(credentialId);
+    public int deleteCredential(Integer credentialId) {
+        return credentialMapper.deleteCredential(credentialId);
     }
 
     /**

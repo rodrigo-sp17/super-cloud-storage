@@ -17,17 +17,17 @@ public interface CredentialMapper {
     @Insert("INSERT INTO CREDENTIALS(url, username, key, password, userid) " +
             "VALUES(#{url}, #{userName}, #{key}, #{password}, #{userId})")
     @Options(useGeneratedKeys = true, keyProperty = "credentialId")
-    Integer insertCredential(Credential credential);
+    int insertCredential(Credential credential);
 
     @Update("UPDATE CREDENTIALS SET url = #{url}, " +
             "username = #{userName}, " +
             "password = #{password}," +
             "key = #{key} " +
             "WHERE credentialid=#{credentialId}")
-    void updateCredential(Credential updatedCredential);
+    int updateCredential(Credential updatedCredential);
 
     @Delete("DELETE FROM CREDENTIALS WHERE credentialid = #{credentialId}")
-    void deleteCredential(Integer credentialId);
+    int deleteCredential(Integer credentialId);
 
 
 }

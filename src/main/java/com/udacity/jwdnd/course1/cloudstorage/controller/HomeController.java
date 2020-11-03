@@ -127,16 +127,33 @@ public class HomeController {
     public String submitCredential(Authentication authentication,
                                    @ModelAttribute Credential credential,
                                    Model model) {
-        String credentialError = null;  // TODO
+        String credentialError = null;
+        String credentialSuccess = null;
         Integer userId = userService.getUser(authentication.getName()).getUserId();
         credential.setUserId(userId);
 
         if (credential.getCredentialId() == null) {
             // add
-            credentialService.createCredential(credential);
+            int rowsAdded = credentialService.createCredential(credential);
+            if (rowsAdded < 0) {
+                credentialError = "Could not add the credential. Please, try again!";
+            } else {
+                credentialSuccess = "Credential created successfully!";
+            }
         } else {
             // edit
-            credentialService.editCredential(credential);
+            int rowsEdited = credentialService.editCredential(credential);
+            if (rowsEdited < 0) {
+                credentialError = "Could not edit the credential. Please, try again!";
+            } else {
+                credentialSuccess = "Credential edited successfully!";
+            }
+        }
+
+        if (credentialError == null) {
+            model.addAttribute("credentialSuccess", credentialSuccess);
+        } else {
+            model.addAttribute("credentialError", credentialError);
         }
 
         model.addAttribute("credentials", credentialService.getAllCredentials());
@@ -146,7 +163,19 @@ public class HomeController {
 
     @PostMapping("/delete-credential")
     public String deleteCredential(@ModelAttribute Credential credential, Model model) {
-        credentialService.deleteCredential(credential.getCredentialId());
+        String deleteError = null;
+        int rowsDeleted = credentialService.deleteCredential(credential.getCredentialId());
+        if (rowsDeleted < 0) {
+            deleteError = "Oh snap! Could not delete the credential! Please, try again!";
+        }
+
+        if (deleteError == null) {
+            String deleteSuccess = "Credential deleted successfully!";
+            model.addAttribute("credentialSuccess", deleteSuccess);
+        } else {
+            model.addAttribute("credentialError", deleteError);
+        }
+
         model.addAttribute("credentials", credentialService.getAllCredentials());
         model.addAttribute("encryptionService", encryptionService);
         return "home";

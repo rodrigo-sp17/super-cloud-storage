@@ -38,7 +38,7 @@
                                         <button type="submit" class="btn btn-dark">Upload</button>
                                     </div>
                                 </div>
-                                <div th:if="${uploadSuccess}" class="alert alert-dark">File uploaded!</div>
+                                <div th:if="${uploadSuccess}" class="alert alert-success">File uploaded!</div>
                                 <div th:if="${uploadError}" th:text="${uploadError}" class="alert alert-danger">Example error message</div>
                             </div>
                         </form>
@@ -130,8 +130,9 @@
                                 onclick="showCredentialModal()">
                             + Add a New Credential
                         </button>
-
                         <div class="table-responsive">
+                        <div th:if="${credentialSuccess}" th:text="${credentialSuccess}" class="alert alert-success">Example success message</div>
+                        <div th:if="${credentialError}" th:text="${credentialError}" class="alert alert-danger">Example error message</div>
                             <table class="table table-striped" id="credentialTable" th:object="${Credential}">
                                 <thead>
                                     <tr>
@@ -144,16 +145,16 @@
                                 <tbody id="credential-rows">
                                 <tr th:each="credential : ${credentials}">
                                     <td>
-                                        <button name="edit-button" type="submit" class="btn btn-success"
-                                                th:data-credentialId="${credential.credentialId}"
-                                                th:data-credentialUrl="${credential.url}"
-                                                th:data-credentialUsername="${credential.userName}"
-                                                th:data-credentialPassword="${encryptionService.decryptValue(credential.password, credential.key)}"
-                                                th:onClick="showCredentialModal(this.getAttribute('data-credentialId'),
+                                        <form action="#" th:action="@{/home/delete-credential}" method="POST">
+                                            <button name="edit-button" type="button" class="btn btn-success"
+                                                    th:data-credentialId="${credential.credentialId}"
+                                                    th:data-credentialUrl="${credential.url}"
+                                                    th:data-credentialUsername="${credential.userName}"
+                                                    th:data-credentialPassword="${encryptionService.decryptValue(credential.password, credential.key)}"
+                                                    th:onClick="showCredentialModal(this.getAttribute('data-credentialId'),
                                                     this.getAttribute('data-credentialUrl'),
                                                     this.getAttribute('data-credentialUsername'),
                                                     this.getAttribute('data-credentialPassword'))">Edit</button>
-                                        <form action="#" th:action="@{/home/delete-credential}" method="POST">
                                             <input type="hidden" name="credentialId" th:value="${credential.credentialId}">
                                             <button type="submit" name="delete-button" class="btn btn-danger">Delete</button>
                                         </form>
