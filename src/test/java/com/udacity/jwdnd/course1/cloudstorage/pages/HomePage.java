@@ -23,11 +23,17 @@ public class HomePage {
     @FindBy(id = "addNote-button")
     private WebElement addNoteButton;
 
+    @FindBy(id = "note-id")
+    private WebElement inputNoteId;
+
     @FindBy(id = "note-title")
     private WebElement inputNoteTitle;
 
     @FindBy(id = "note-description")
     private WebElement inputNoteDescription;
+
+    @FindBy(id = "noteClose-button")
+    private WebElement noteCloseButton;
 
     @FindBy(id = "noteSubmit-button")
     private WebElement noteSubmitButton;
@@ -46,6 +52,9 @@ public class HomePage {
 
     @FindBy(id = "addCredential-button")
     private WebElement addCredentialButton;
+
+    @FindBy(id = "credential-id")
+    private WebElement inputCredentialId;
 
     @FindBy(id = "credential-url")
     private WebElement inputCredentialUrl;
@@ -75,7 +84,7 @@ public class HomePage {
 
     // Minimum time required for tabs to load. Unfortunately, FluentWait is not enough for it
     // to be clicked every time. In milliseconds.
-    private static final int TAB_WAITING_TIME = 1500;
+    private static final int TAB_WAITING_TIME = 1000;
 
     public HomePage(WebDriver driver) {
         PageFactory.initElements(driver, this);
@@ -167,10 +176,17 @@ public class HomePage {
         driver.switchTo().activeElement();
         WebDriverWait wait = new WebDriverWait(driver, 2000);
         wait.until(ExpectedConditions.visibilityOf(inputNoteTitle));
+        Integer noteId = Integer.parseInt(inputNoteId.getAttribute("value"));
         String title = inputNoteTitle.getAttribute("value");
         String description = inputNoteDescription.getAttribute("value");
 
-        return new Note(null, title, description, null);
+        return new Note(noteId, title, description, null);
+    }
+
+    public void closeNoteModal() {
+        WebDriverWait wait = new WebDriverWait(driver, 2000);
+        wait.until(ExpectedConditions.visibilityOf(noteCloseButton));
+        noteCloseButton.click();
     }
 
     public void editNote(String title, String description, Note editedNote) {
@@ -259,10 +275,11 @@ public class HomePage {
         WebDriverWait wait = new WebDriverWait(driver, 2000);
         wait.until(ExpectedConditions.visibilityOf(inputCredentialUrl));
         String url = inputCredentialUrl.getAttribute("value");
+        Integer credentialId = Integer.parseInt(inputCredentialId.getAttribute("value"));
         String username = inputCredentialUserName.getAttribute("value");
         String password = inputCredentialPassword.getAttribute("value");
 
-        return new Credential(null,
+        return new Credential(credentialId,
                 url,
                 username,
                 null,

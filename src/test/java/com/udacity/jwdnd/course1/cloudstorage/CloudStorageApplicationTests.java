@@ -63,8 +63,6 @@ class CloudStorageApplicationTests {
 
     final User user1 = new User(null, "charlie-1", null,
             "123charlie", "Charlie", "Waffles");
-    private boolean signedUpUser1 = false;
-
     final User user2 = new User(null, "BRAVO-2", null,
             "bravo@@##", "Bravo", "Smith");
     final User user3 = new User(null, "delta@", null,
@@ -100,8 +98,7 @@ class CloudStorageApplicationTests {
         assertTrue(signupPage.isSignupSuccessful());
 
         // login test
-        LoginPage loginPage = login(user1);
-        assertTrue(loginPage.isLoginSuccessful());
+        login(user1);
         assertEquals("Home", driver.getTitle());
 
         // logout test
@@ -109,8 +106,7 @@ class CloudStorageApplicationTests {
         HomePage homePage = new HomePage(driver);
         homePage.logout();
 
-        getLoginPage();
-        loginPage = new LoginPage(driver);
+        LoginPage loginPage = new LoginPage(driver);
         assertTrue(loginPage.isLogoutSuccessful());
 
         getHomePage();
@@ -118,6 +114,7 @@ class CloudStorageApplicationTests {
     }
 
     @Test
+    @Order(0)
     public void testWrongLogin() {
         LoginPage loginPage = login(user2);
         assertFalse(loginPage.isLoginSuccessful());
@@ -145,8 +142,6 @@ class CloudStorageApplicationTests {
 
         Note note1 = new Note(null, "Title1",
                 "description1", null);
-        Note note2 = new Note(null, "title2",
-                "description2", null);
 
         // Adds note
         homePage.addNote(note1);
@@ -250,14 +245,7 @@ class CloudStorageApplicationTests {
             "decryptedpassword2",
             null
     );
-    Credential credential3 = new Credential(
-            null,
-            "https://linkedin.com/",
-            "krazy",
-            null,
-            "decryptedpassword3",
-            null
-    );
+
 
     @Test
     @Order(7)
@@ -364,5 +352,63 @@ class CloudStorageApplicationTests {
 
         assertFalse(usernames.contains(credential2.getUserName()) &&
                 urls.contains(credential2.getUrl()));
+    }
+
+    @Test
+    @Order(10)
+    public void testNoUnauthorizedUses() {
+        Credential credential3 = new Credential(
+                null,
+                "https://linkedin.com/",
+                "krazy",
+                null,
+                "decryptedpassword3",
+                null
+        );
+        Note note2 = new Note(null, "title2",
+                "description2", null);
+        signup(user2);
+        login(user2);
+        getHomePage();
+        HomePage homePage = new HomePage(driver);
+
+        homePage.setNotesTab();
+        homePage.addNote(note2);
+        homePage.setNotesTab();
+        Integer noteId = homePage.viewNote(note2.getNoteTitle(), note2.getNoteDescription())
+                .getNoteId();
+        homePage.closeNoteModal();
+        homePage.setCredentialsTab();
+        homePage.addCredential(credential3);
+
+        homePage.logout();
+
+        signup(user3);
+        login(user3);
+        homePage = new HomePage(driver);
+        homePage.setNotesTab();
+        var notes = homePage.getNotes();
+        homePage.setCredentialsTab();
+        var credentials = homePage.getCredentials();
+        assertTrue(notes.isEmpty());
+        assertTrue(credentials.isEmpty());
+
+        driver.get("http://localhost:" + this.port + "/home/note?delete=" + noteId);
+        assertNotEquals("home", driver.getTitle());
+
+        login(user2);
+        homePage = new HomePage(driver);
+        homePage.setNotesTab();
+        notes = homePage.getNotes();
+        homePage.setCredentialsTab();
+        credentials = homePage.getCredentials();
+
+        assertFalse(notes.isEmpty());
+        assertFalse(credentials.isEmpty());
+
+        driver.get("http://localhost:" + this.port + "/home/note?delete=" + noteId);
+        homePage.setNotesTab();
+        notes = homePage.getNotes();
+        assertTrue(notes.isEmpty());
     }
 }

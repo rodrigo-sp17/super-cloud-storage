@@ -35,8 +35,8 @@ public class FileService {
         return fileMapper.getFile(fileId);
     }
 
-    public List<File> getAllFiles() {
-        return fileMapper.getAllFiles();
+    public List<File> getAllFiles(Integer userId) {
+        return fileMapper.getAllFiles(userId);
     }
 
     public boolean isFilenameAvailable(String fileName) {
