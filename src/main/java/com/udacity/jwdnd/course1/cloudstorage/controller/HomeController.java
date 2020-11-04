@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Objects;
 
@@ -33,31 +34,25 @@ public class HomeController {
         this.encryptionService = encryptionService;
     }
 
-    /**
-     * Helper method that loads attributes based on userId. It was necessary instead of
-     * a @ModelAttribute method because Spring was not injecting Authentication details, therefore
-     * making impossible the retrieval of userId by itself.
-     * @param userId    the userId as determined through Authentication and userService
-     * @param model     the implicit model used by Spring
-     */
-    private void addAttributes(Integer userId, Model model) {
-        model.addAttribute("files", fileService.getAllFiles(userId));
-        model.addAttribute("notes", noteService.getAllNotes(userId));
-        model.addAttribute("credentials", credentialService.getAllCredentials(userId));
-        model.addAttribute("encryptionService", encryptionService);
+    @ModelAttribute
+    public void addAttributes(Authentication auth, Model model) {
+        if (auth != null) {
+            Integer userId = userService.getUser(auth.getName()).getUserId();
+            model.addAttribute("files", fileService.getAllFiles(userId));
+            model.addAttribute("notes", noteService.getAllNotes(userId));
+            model.addAttribute("credentials", credentialService.getAllCredentials(userId));
+            model.addAttribute("encryptionService", encryptionService);
+        }
     }
 
     @GetMapping
-    public String homeView(Authentication authentication, @ModelAttribute Note note, Model model) {
-        Integer userId = userService.getUser(authentication.getName()).getUserId();
-
-        addAttributes(userId, model);
-
+    public String homeView(@ModelAttribute Note note, Model model) {
         return "home";
     }
 
     @PostMapping("/upload")
     public String uploadFile(@RequestParam("fileUpload") MultipartFile file,
+                             RedirectAttributes redirectAttributes,
                              Authentication authentication,
                              Model model) {
         String username = authentication.getName();
@@ -78,19 +73,18 @@ public class HomeController {
         }
 
         if (uploadError == null) {
-            model.addAttribute("fileSuccess", uploadSuccess);
+            redirectAttributes.addFlashAttribute("fileSuccess", uploadSuccess);
         } else {
-            model.addAttribute("fileError", uploadError);
+            redirectAttributes.addFlashAttribute("fileError", uploadError);
         }
 
-        addAttributes(userId, model);
-
-        return "home";
+        return "redirect:/home";
     }
 
     @GetMapping(value = "/file", params = "view")
     @ResponseBody
     public ResponseEntity<byte[]> viewFile(@RequestParam("view") Integer fileId,
+                                           RedirectAttributes redirectAttributes,
                                            Authentication authentication,
                                            Model model) {
         Integer userId = userService.getUser(authentication.getName()).getUserId();
@@ -100,7 +94,8 @@ public class HomeController {
 
         File file = fileService.getFile(fileId);
         if (file == null) {
-            model.addAttribute("fileError", "Ops! Error retrieving file. Please, try again!");
+            redirectAttributes.addFlashAttribute("fileError",
+                    "Ops! Error retrieving file. Please, try again!");
             return ResponseEntity.badRequest().body(null);
         }
 
@@ -118,6 +113,7 @@ public class HomeController {
 
     @GetMapping(value = "/file", params = "delete")
     public String deleteFile(@RequestParam("delete") Integer fileId,
+                             RedirectAttributes redirectAttributes,
                              Authentication authentication,
                              Model model) {
         Integer userId = userService.getUser(authentication.getName()).getUserId();
@@ -136,18 +132,17 @@ public class HomeController {
         }
 
         if (deleteError == null) {
-            model.addAttribute("fileSuccess", deleteSuccess);
+            redirectAttributes.addFlashAttribute("fileSuccess", deleteSuccess);
         } else {
-            model.addAttribute("fileError", deleteError);
+            redirectAttributes.addFlashAttribute("fileError", deleteError);
         }
 
-       addAttributes(userId, model);
-
-        return "home";
+        return "redirect:/home";
     }
 
     @PostMapping("/submit-note")
     public String submitNote(Authentication authentication,
+                             RedirectAttributes redirectAttributes,
                              @ModelAttribute Note note,
                              Model model) {
         String noteSuccess = null;
@@ -179,18 +174,17 @@ public class HomeController {
         }
 
         if (noteError == null) {
-            model.addAttribute("noteSuccess", noteSuccess);
+            redirectAttributes.addFlashAttribute("noteSuccess", noteSuccess);
         } else {
-            model.addAttribute("noteError", noteError);
+            redirectAttributes.addFlashAttribute("noteError", noteError);
         }
 
-        addAttributes(userId, model);
-
-        return "home";
+        return "redirect:/home";
     }
 
     @GetMapping(value = "/note", params = "delete")
     public String deleteNote(@RequestParam("delete") Integer noteId,
+                             RedirectAttributes redirectAttributes,
                              Authentication authentication,
                              Model model) {
         Integer userId = userService.getUser(authentication.getName()).getUserId();
@@ -207,18 +201,17 @@ public class HomeController {
         }
 
         if (deleteError == null) {
-            model.addAttribute("noteSuccess", "Note deleted successfully!");
+            redirectAttributes.addFlashAttribute("noteSuccess", "Note deleted successfully!");
         } else {
-            model.addAttribute("noteError", deleteError);
+            redirectAttributes.addFlashAttribute("noteError", deleteError);
         }
 
-        addAttributes(userId, model);
-
-        return "home";
+        return "redirect:/home";
     }
 
     @PostMapping("/submit-credential")
     public String submitCredential(Authentication authentication,
+                                   RedirectAttributes redirectAttributes,
                                    @ModelAttribute Credential credential,
                                    Model model) {
         String credentialError = null;
@@ -245,18 +238,17 @@ public class HomeController {
         }
 
         if (credentialError == null) {
-            model.addAttribute("credentialSuccess", credentialSuccess);
+            redirectAttributes.addFlashAttribute("credentialSuccess", credentialSuccess);
         } else {
-            model.addAttribute("credentialError", credentialError);
+            redirectAttributes.addFlashAttribute("credentialError", credentialError);
         }
 
-        addAttributes(userId, model);
-
-        return "home";
+        return "redirect:/home";
     }
 
     @PostMapping("/delete-credential")
     public String deleteCredential(@ModelAttribute Credential credential,
+                                   RedirectAttributes redirectAttributes,
                                    Authentication authentication,
                                    Model model) {
         Integer userId = userService.getUser(authentication.getName()).getUserId();
@@ -275,13 +267,11 @@ public class HomeController {
 
         if (deleteError == null) {
             String deleteSuccess = "Credential deleted successfully!";
-            model.addAttribute("credentialSuccess", deleteSuccess);
+            redirectAttributes.addFlashAttribute("credentialSuccess", deleteSuccess);
         } else {
-            model.addAttribute("credentialError", deleteError);
+            redirectAttributes.addFlashAttribute("credentialError", deleteError);
         }
 
-        addAttributes(userId, model);
-
-        return "home";
+        return "redirect:/home";
     }
 }
