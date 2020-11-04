@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Objects;
 
 @Controller
+@ControllerAdvice
 @RequestMapping("/home")
 public class HomeController {
     private final NoteService noteService;
@@ -32,14 +33,25 @@ public class HomeController {
         this.encryptionService = encryptionService;
     }
 
-    @GetMapping
-    public String homeView(Authentication authentication, @ModelAttribute Note note, Model model) {
-        Integer userId = userService.getUser(authentication.getName()).getUserId();
-
+    /**
+     * Helper method that loads attributes based on userId. It was necessary instead of
+     * a @ModelAttribute method because Spring was not injecting Authentication details, therefore
+     * making impossible the retrieval of userId by itself.
+     * @param userId    the userId as determined through Authentication and userService
+     * @param model     the implicit model used by Spring
+     */
+    private void addAttributes(Integer userId, Model model) {
         model.addAttribute("files", fileService.getAllFiles(userId));
         model.addAttribute("notes", noteService.getAllNotes(userId));
         model.addAttribute("credentials", credentialService.getAllCredentials(userId));
         model.addAttribute("encryptionService", encryptionService);
+    }
+
+    @GetMapping
+    public String homeView(Authentication authentication, @ModelAttribute Note note, Model model) {
+        Integer userId = userService.getUser(authentication.getName()).getUserId();
+
+        addAttributes(userId, model);
 
         return "home";
     }
@@ -48,11 +60,12 @@ public class HomeController {
     public String uploadFile(@RequestParam("fileUpload") MultipartFile file,
                              Authentication authentication,
                              Model model) {
+        String username = authentication.getName();
+        Integer userId = userService.getUser(username).getUserId();
         String uploadSuccess = null;
         String uploadError = null;
+
         if (fileService.isFilenameAvailable(file.getOriginalFilename())) {
-            String username = authentication.getName();
-            Integer userId = userService.getUser(username).getUserId();
             int rowsAdded = fileService.createFile(file, userId);
             if (rowsAdded < 0) {
                 uploadError = "Ops! Error uploading file. Please, try again!";
@@ -70,7 +83,9 @@ public class HomeController {
             model.addAttribute("fileError", uploadError);
         }
 
-        return "redirect:/home";
+        addAttributes(userId, model);
+
+        return "home";
     }
 
     @GetMapping(value = "/file", params = "view")
@@ -125,9 +140,10 @@ public class HomeController {
         } else {
             model.addAttribute("fileError", deleteError);
         }
-        //model.addAttribute("files", fileService.getAllFiles());
 
-        return "redirect:/home";
+       addAttributes(userId, model);
+
+        return "home";
     }
 
     @PostMapping("/submit-note")
@@ -168,7 +184,9 @@ public class HomeController {
             model.addAttribute("noteError", noteError);
         }
 
-        return "redirect:/home";
+        addAttributes(userId, model);
+
+        return "home";
     }
 
     @GetMapping(value = "/note", params = "delete")
@@ -194,7 +212,9 @@ public class HomeController {
             model.addAttribute("noteError", deleteError);
         }
 
-        return "redirect:/home";
+        addAttributes(userId, model);
+
+        return "home";
     }
 
     @PostMapping("/submit-credential")
@@ -230,7 +250,9 @@ public class HomeController {
             model.addAttribute("credentialError", credentialError);
         }
 
-        return "redirect:/home";
+        addAttributes(userId, model);
+
+        return "home";
     }
 
     @PostMapping("/delete-credential")
@@ -258,6 +280,8 @@ public class HomeController {
             model.addAttribute("credentialError", deleteError);
         }
 
-        return "redirect:/home";
+        addAttributes(userId, model);
+
+        return "home";
     }
 }
