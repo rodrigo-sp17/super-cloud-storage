@@ -229,7 +229,7 @@ class CloudStorageApplicationTests {
         assertFalse(descriptions.contains(displayedNote.getNoteDescription()));
     }
 
-    Credential credential1 = new Credential(
+    final Credential credential1 = new Credential(
             null,
             "https://www.facebook.com/",
             "John@DOE123",
@@ -237,7 +237,7 @@ class CloudStorageApplicationTests {
             "decryptedpassword1",
             null
     );
-    Credential credential2 = new Credential(
+    final Credential credential2 = new Credential(
             null,
             "https://twitter.com/login?lang=pt",
             "JANE_d03",

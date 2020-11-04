@@ -38,11 +38,11 @@
                                         <button type="submit" class="btn btn-dark">Upload</button>
                                     </div>
                                 </div>
-                                <div th:if="${fileSuccess}" th:text="${fileSuccess}" class="alert alert-success">Example success message</div>
-                                <div th:if="${fileError}" th:text="${fileError}" class="alert alert-danger">Example error message</div>
                             </div>
                         </form>
                         <div class="table-responsive">
+                                <div th:if="${fileSuccess}" th:text="${fileSuccess}" class="alert alert-success">Example success message</div>
+                                <div th:if="${fileError}" th:text="${fileError}" class="alert alert-danger">Example error message</div>
                             <table class="table table-striped" id="fileTable">
                                 <thead>
                                     <tr>

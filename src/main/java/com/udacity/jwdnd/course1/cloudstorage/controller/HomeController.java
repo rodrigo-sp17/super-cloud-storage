@@ -12,7 +12,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileNotFoundException;
+import java.util.Objects;
 
 @Controller
 @RequestMapping("/home")
@@ -110,7 +110,7 @@ public class HomeController {
         String deleteError = null;
 
         Integer fileUserId = fileService.getFile(fileId).getUserId();
-        if (userId != fileUserId) {
+        if (!Objects.equals(userId, fileUserId)) {
             throw new AccessDeniedException("You do not have access for this operation");
         }
         int rowsDeleted = fileService.deleteFile(fileId);
@@ -179,7 +179,7 @@ public class HomeController {
         String deleteError = null;
 
         Integer noteUserId = noteService.getNote(noteId).getUserId();
-        if (userId != noteUserId) {
+        if (!Objects.equals(userId, noteUserId)) {
             throw new AccessDeniedException("You do not have access for this operation");
         }
 
@@ -243,7 +243,7 @@ public class HomeController {
         Integer credentialUserId = credentialService
                 .getCredential(credential.getCredentialId())
                 .getUserId();
-        if (userId != credentialUserId) {
+        if (!Objects.equals(userId, credentialUserId)) {
             throw new AccessDeniedException("You do not have access for this operation");
         }
         int rowsDeleted = credentialService.deleteCredential(credential.getCredentialId());

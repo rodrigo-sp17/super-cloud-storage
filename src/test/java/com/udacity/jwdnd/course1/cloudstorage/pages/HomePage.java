@@ -47,9 +47,6 @@ public class HomePage {
     @FindBy(id = "nav-notes-tab")
     private WebElement notesTab;
 
-    //@FindBy(id = "nav-notes")
-    //private WebElement navNotes;
-
     @FindBy(id = "addCredential-button")
     private WebElement addCredentialButton;
 

@@ -9,7 +9,6 @@ import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.FluentWait;
 import org.openqa.selenium.support.ui.Wait;
 
-import java.io.FileNotFoundException;
 import java.time.Duration;
 
 public class SignupPage {
@@ -27,12 +26,6 @@ public class SignupPage {
 
     @FindBy(id = "submit-button")
     private WebElement submitButton;
-
-    @FindBy(id = "success-msg")
-    private WebElement successMsg;
-
-    @FindBy(id = "fail-msg")
-    private WebElement failMsg;
 
     private final WebDriver driver;
 
@@ -60,11 +53,11 @@ public class SignupPage {
                 .withTimeout(Duration.ofSeconds(10))
                 .pollingEvery(Duration.ofSeconds(2));
         try {
-            successMsg = driver.findElement(By.id("success-msg"));
+            WebElement successMsg = driver.findElement(By.id("success-msg"));
             return successMsg.isDisplayed();
         } catch (NoSuchElementException e) {
             try {
-                failMsg = driver.findElement(By.id("fail-msg"));
+                WebElement failMsg = driver.findElement(By.id("fail-msg"));
                 return !failMsg.isDisplayed();
             } catch (NoSuchElementException f) {
                 throw new AssertionError("Required elements could not be found");
