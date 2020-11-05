@@ -2,22 +2,21 @@ package com.udacity.jwdnd.course1.cloudstorage.service;
 
 import com.udacity.jwdnd.course1.cloudstorage.entity.Credential;
 import com.udacity.jwdnd.course1.cloudstorage.mapper.CredentialMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
 
 @Service
+@Transactional
 public class CredentialService {
-    private final CredentialMapper credentialMapper;
-    private final EncryptionService encryptionService;
-
-    public CredentialService(CredentialMapper credentialMapper,
-                             EncryptionService encryptionService) {
-        this.credentialMapper = credentialMapper;
-        this.encryptionService = encryptionService;
-    }
+    @Autowired
+    private CredentialMapper credentialMapper;
+    @Autowired
+    private EncryptionService encryptionService;
 
     public List<Credential> getAllCredentials(Integer userId) {
         return credentialMapper.getAllCredentials(userId);

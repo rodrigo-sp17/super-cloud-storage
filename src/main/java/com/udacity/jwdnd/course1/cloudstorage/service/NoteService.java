@@ -2,17 +2,17 @@ package com.udacity.jwdnd.course1.cloudstorage.service;
 
 import com.udacity.jwdnd.course1.cloudstorage.entity.Note;
 import com.udacity.jwdnd.course1.cloudstorage.mapper.NoteMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class NoteService {
-    private final NoteMapper noteMapper;
-
-    public NoteService(NoteMapper noteMapper) {
-        this.noteMapper = noteMapper;
-    }
+    @Autowired
+    private NoteMapper noteMapper;
 
     public Integer createNote(Note note) {
         return noteMapper.insertNote(note);

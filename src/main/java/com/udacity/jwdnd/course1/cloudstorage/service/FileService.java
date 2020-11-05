@@ -5,7 +5,9 @@ import com.udacity.jwdnd.course1.cloudstorage.mapper.FileMapper;
 import com.udacity.jwdnd.course1.cloudstorage.service.storage.StorageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -13,11 +15,13 @@ import java.io.InputStream;
 import java.util.List;
 
 @Service
+@Transactional
 public class FileService {
 
     private final Logger logger = LoggerFactory.getLogger(StorageService.class);
 
-    private final FileMapper fileMapper;
+    @Autowired
+    private FileMapper fileMapper;
 
     //private final Path rootLocation;
 
@@ -27,10 +31,6 @@ public class FileService {
         rootLocation = Paths.get(storageProperties.getLocation());
     }
     */
-
-    public FileService(FileMapper fileMapper) {
-        this.fileMapper = fileMapper;
-    }
 
     public File getFile(Integer fileId) {
         return fileMapper.getFile(fileId);
