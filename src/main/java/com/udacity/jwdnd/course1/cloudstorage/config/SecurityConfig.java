@@ -27,7 +27,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         // Sets up open access pages
         http.authorizeRequests().antMatchers(
-                "/css/**", "/js/**", "/signup")
+                "/css/**", "/js/**", "/img/**", "/signup", "/error")
                 .permitAll()
                 .anyRequest().authenticated();
 

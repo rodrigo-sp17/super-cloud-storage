@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 @Service
@@ -44,9 +45,9 @@ public class FileService {
     }
 
     public int createFile(MultipartFile file, Integer creatorUserId) {
-        try {
-            if (file != null) {
-                byte[] data = file.getInputStream().readAllBytes();
+        if (file != null) {
+            try (InputStream in = file.getInputStream()){
+                byte[] data = in.readAllBytes();
                 File newFile = new File(
                         null,
                         file.getOriginalFilename(),
@@ -56,9 +57,9 @@ public class FileService {
                         data
                         );
                 return fileMapper.insertFile(newFile);
+            } catch (IOException e) {
+                logger.error("Failed to upload file");
             }
-        } catch (IOException e) {
-            logger.error("Failed to upload file");
         }
         return -1;
     }

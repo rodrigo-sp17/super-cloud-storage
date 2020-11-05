@@ -1,38 +1,50 @@
 package com.udacity.jwdnd.course1.cloudstorage.controller;
 
+import com.udacity.jwdnd.course1.cloudstorage.config.UploadConfig;
 import com.udacity.jwdnd.course1.cloudstorage.entity.Credential;
 import com.udacity.jwdnd.course1.cloudstorage.entity.File;
 import com.udacity.jwdnd.course1.cloudstorage.entity.Note;
 import com.udacity.jwdnd.course1.cloudstorage.service.*;
+import org.apache.ibatis.mapping.Environment;
+import org.apache.tomcat.util.http.fileupload.FileUpload;
+import org.apache.tomcat.util.http.fileupload.FileUploadException;
+import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartResolver;
+import org.springframework.web.multipart.commons.CommonsMultipartResolver;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Objects;
 
 @Controller
 @ControllerAdvice
 @RequestMapping("/home")
 public class HomeController {
-    private final NoteService noteService;
-    private final UserService userService;
-    private final FileService fileService;
-    private final CredentialService credentialService;
-    private final EncryptionService encryptionService;
-
-    public HomeController(NoteService noteService, UserService userService, FileService fileService,
-                          CredentialService credentialService, EncryptionService encryptionService) {
-        this.noteService = noteService;
-        this.userService = userService;
-        this.fileService = fileService;
-        this.credentialService = credentialService;
-        this.encryptionService = encryptionService;
-    }
+    @Autowired
+    private NoteService noteService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private FileService fileService;
+    @Autowired
+    private CredentialService credentialService;
+    @Autowired
+    private EncryptionService encryptionService;
 
     @ModelAttribute
     public void addAttributes(Authentication auth, Model model) {
@@ -60,16 +72,20 @@ public class HomeController {
         String uploadSuccess = null;
         String uploadError = null;
 
-        if (fileService.isFilenameAvailable(file.getOriginalFilename())) {
-            int rowsAdded = fileService.createFile(file, userId);
-            if (rowsAdded < 0) {
-                uploadError = "Ops! Error uploading file. Please, try again!";
-            } else {
-                uploadSuccess = "File uploaded successfully!";
-            }
+        if (file.getOriginalFilename().isBlank()) {
+            uploadError = "There is nothing to upload!";
         } else {
-            uploadError = "Ops! There is already a file with this name!" +
-                    " Please, choose another file!";
+            if (fileService.isFilenameAvailable(file.getOriginalFilename())) {
+                int rowsAdded = fileService.createFile(file, userId);
+                if (rowsAdded < 0) {
+                    uploadError = "Ops! Error uploading file. Please, try again!";
+                } else {
+                    uploadSuccess = "File uploaded successfully!";
+                }
+            } else {
+                uploadError = "Ops! There is already a file with this name!" +
+                        " Please, choose another file!";
+            }
         }
 
         if (uploadError == null) {
@@ -79,6 +95,21 @@ public class HomeController {
         }
 
         return "redirect:/home";
+    }
+
+    // See more at https://www.baeldung.com/spring-maxuploadsizeexceeded
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ModelAndView handleUploadException(MaxUploadSizeExceededException e,
+                                              HttpServletRequest request,
+                                              HttpServletResponse response) {
+
+        String uploadError = String.format("Maximum file size for uploading is %d MB!",
+                UploadConfig.MAX_UPLOAD_SIZE.toMegabytes());
+
+        ModelAndView mav = new ModelAndView("home");
+        mav.addObject("fileError", uploadError);
+
+        return mav;
     }
 
     @GetMapping(value = "/file", params = "view")
